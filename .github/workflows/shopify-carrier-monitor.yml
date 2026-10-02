@@ -1,0 +1,79 @@
+name: Shopify carrier-rate monitor
+
+# Synthetic checkout on the vefd28-bb dev store, stopping at the shipping-method
+# stage to verify the carrier service rate. Never enters payment or places orders.
+
+on:
+  schedule:
+    - cron: "17 * * * *" # hourly (UTC)
+  workflow_dispatch:
+    inputs:
+      num_runs:
+        description: "Checkouts in this run"
+        default: "10"
+  push:
+    branches: [main]
+    paths:
+      - "monitoring/**"
+      - ".github/workflows/shopify-carrier-monitor.yml"
+
+concurrency:
+  group: shopify-carrier-monitor
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Playwright, Chromium and a virtual display
+        run: |
+          pip install "playwright==1.56.0"
+          python -m playwright install --with-deps chromium
+          sudo apt-get install -y xvfb
+
+      - name: Run monitor
+        env:
+          NUM_RUNS: ${{ inputs.num_runs || '10' }}
+          ARTIFACT_DIR: ${{ github.workspace }}/monitoring/artifacts
+        run: bash monitoring/run_monitor.sh
+
+      - name: Write run summary
+        if: always()
+        run: |
+          python3 - <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          import json, pathlib
+          p = pathlib.Path("monitoring/artifacts/summary.json")
+          if not p.exists():
+              print("## FAIL - monitor did not produce summary.json")
+              raise SystemExit
+          s = json.loads(p.read_text())
+          print(f"## {s['result']} - {s['passed']}/{s['runs']} passed")
+          print(f"- **Timestamp:** {s['timestamp']}")
+          print(f"- **Expected:** {s['expected_carrier']} / {s['expected_rate']}")
+          print()
+          print("| Run | Status | Stage | Product | Address | Shipping options | Carrier | Amount | Error |")
+          print("|---|---|---|---|---|---|---|---|---|")
+          for r in s["details"]:
+              opts = "<br>".join(r["shipping_options"]) or "-"
+              prod = (r["product"] or "-").rsplit("/", 1)[-1]
+              print(f"| {r['run']} | {r['status']} | {r['stage']} | {prod} | {r['address']} | {opts} | "
+                    f"{'yes' if r['carrier_found'] else 'no'} | {'yes' if r['amount_found'] else 'no'} | {r['error'] or ''} |")
+          EOF
+
+      - name: Upload screenshots and summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: carrier-monitor-${{ github.run_id }}
+          path: monitoring/artifacts/
+          retention-days: 14
