@@ -1,7 +1,7 @@
 # Shopify carrier-rate monitor
 
 Hourly synthetic checkout against the `vefd28-bb.myshopify.com` **development store**.
-Each run (GitHub Actions, `23 * * * *` UTC) does 20 checkouts (about 21 minutes):
+Each run (GitHub Actions, started every hour at :23 UTC by a Claude scheduled routine) does 20 checkouts (about 21 minutes):
 
 1. open `/collections/all`, pick a random product, add it to the cart
 2. open checkout, fill a test email and a Bangladesh test address
@@ -16,5 +16,3 @@ and never changes the store.
 - Settings via env vars in `monitoring/shopify_carrier_monitor_cloud.py`: `EXPECTED_RATE_NAME`,
   `EXPECTED_RATE_AMOUNT`, `STEP_DELAY_SEC`, `DELAY_BETWEEN_RUNS_SEC`, `HEADLESS`.
 
-Note: GitHub pauses scheduled workflows in public repos after 60 days without repository activity;
-re-enable it from the Actions tab if that happens.

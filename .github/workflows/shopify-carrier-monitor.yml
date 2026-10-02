@@ -4,18 +4,13 @@ name: Shopify carrier-rate monitor
 # stage to verify the carrier service rate. Never enters payment or places orders.
 
 on:
-  schedule:
-    - cron: "23 * * * *" # hourly at :23 (UTC)
+  # Started hourly (at :23 UTC) by a Claude scheduled routine via the
+  # workflow_dispatch API; GitHub's own cron never fired for this repo.
   workflow_dispatch:
     inputs:
       num_runs:
         description: "Checkouts in this run"
         default: "20"
-  push:
-    branches: [main]
-    paths:
-      - "monitoring/**"
-      - ".github/workflows/shopify-carrier-monitor.yml"
 
 concurrency:
   group: shopify-carrier-monitor
