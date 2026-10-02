@@ -10,7 +10,7 @@ on:
     inputs:
       num_runs:
         description: "Checkouts in this run"
-        default: "10"
+        default: "20"
   push:
     branches: [main]
     paths:
@@ -27,7 +27,7 @@ permissions:
 jobs:
   monitor:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
 
@@ -43,7 +43,7 @@ jobs:
 
       - name: Run monitor
         env:
-          NUM_RUNS: ${{ inputs.num_runs || '10' }}
+          NUM_RUNS: ${{ inputs.num_runs || '20' }}
           ARTIFACT_DIR: ${{ github.workspace }}/monitoring/artifacts
         run: bash monitoring/run_monitor.sh
 

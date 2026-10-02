@@ -1,7 +1,7 @@
 # Shopify carrier-rate monitor
 
 Hourly synthetic checkout against the `vefd28-bb.myshopify.com` **development store**.
-Each run (GitHub Actions, `17 * * * *` UTC) does 10 checkouts:
+Each run (GitHub Actions, `17 * * * *` UTC) does 20 checkouts (about 21 minutes):
 
 1. open `/collections/all`, pick a random product, add it to the cart
 2. open checkout, fill a test email and a Bangladesh test address
